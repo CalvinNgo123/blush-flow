@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Blush Flow - Cute Period & Cycle Tracker</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for cute icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Quicksand & Nunito for playful aesthetics -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'blush-bg': '#FFF5F7',       /* Soft Pastel Background */
+                        'blush-card': '#FFFFFF',
+                        'blush-primary': '#F49AC2',    /* Softer Pastel Pink */
+                        'blush-deep': '#E87EA1',       /* Rich Pastel Rose */
+                        'blush-soft': '#FFD1DC',       /* Light Pastel Pink */
+                        'blush-accent': '#F8A4B8',     /* Medium Pastel Pink */
+                        'period-red': '#E53935',       /* Soft Red for Menstruation */
+                        'period-red-bg': '#FFEBEE',    /* Light Red Tint Background */
+                        'heart-unprotected': '#E53935',/* Soft Red Heart */
+                        'heart-protected': '#B388FF',  /* Pastel Purple Heart */
+                        'ovulation-star': '#FFD166',  /* Cute Yellow Star */
+                        'text-main': '#5C3A43'         /* Soft Dark Red/Brown */
+                    },
+                    fontFamily: {
+                        'sans': ['Nunito', 'Quicksand', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'cute': '0 8px 24px -4px rgba(244, 154, 194, 0.3)',
+                        'cute-sm': '0 4px 12px rgba(244, 154, 194, 0.2)',
+                        'cute-inner': 'inset 0 2px 4px rgba(244, 154, 194, 0.1)'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #1a1a24;
+            color: #5C3A43;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        /* Hide scrollbars for clean app feel */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Pulsing animation for projected period & mascot */
+        @keyframes gentle-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .animate-gentle {
+            animation: gentle-pulse 3s infinite ease-in-out;
+        }
+
+        @keyframes bounce-subtle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        .animate-bounce-cute {
+            animation: bounce-subtle 2s infinite ease-in-out;
+        }
+
+        /* Calendar Grid Aspect Ratio */
+        .calendar-day {
+            min-height: 52px;
+            transition: all 0.2s ease;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-0 sm:p-4">
+
+    <!-- iPhone Device Frame Container -->
+    <div class="relative w-full max-w-[412px] h-[100vh] sm:h-[844px] bg-blush-bg sm:rounded-[50px] shadow-2xl overflow-hidden flex flex-col border-0 sm:border-[10px] border-slate-900">
+        
+        <!-- Dynamic Island / Top Notch -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[120px] h-[28px] bg-black rounded-b-2xl z-50 flex items-center justify-center hidden sm:flex">
+            <div class="w-3 h-3 rounded-full bg-slate-900 mr-2 border border-slate-800"></div>
+            <div class="w-2 h-2 rounded-full bg-blue-900/40"></div>
+        </div>
+
+        <!-- iOS Status Bar -->
+        <div class="w-full pt-3 px-6 pb-2 flex justify-between items-center text-xs font-bold text-slate-800 z-40 select-none">
+            <span id="ios-time">9:41</span>
+            <div class="flex items-center space-x-1.5">
+                <i class="fa-solid fa-signal text-[10px]"></i>
+                <i class="fa-solid fa-wifi text-[10px]"></i>
+                <i class="fa-solid fa-battery-full text-xs text-emerald-600"></i>
+            </div>
+        </div>
+
+        <!-- APP HEADER WITH MASCOT -->
+        <header class="px-5 py-2 flex items-center justify-between z-30">
+            <div class="flex items-center space-x-2">
+                <!-- Cute Blood Drop Mascot Logo -->
+                <div class="w-10 h-10 relative flex items-center justify-center filter drop-shadow-md cursor-pointer animate-gentle" onclick="app.showMascotGreeting()">
+                    <svg viewBox="0 0 100 120" class="w-full h-full">
+                        <path d="M50 5 C50 5 10 55 10 80 C10 102 28 115 50 115 C72 115 90 102 90 80 C90 55 50 5 50 5 Z" fill="#FF4D6D" />
+                        <!-- Eyes -->
+                        <ellipse cx="38" cy="70" rx="4" ry="6" fill="#333" />
+                        <ellipse cx="62" cy="70" rx="4" ry="6" fill="#333" />
+                        <circle cx="36" cy="68" r="1.5" fill="#FFF" />
+                        <circle cx="60" cy="68" r="1.5" fill="#FFF" />
+                        <!-- Blush Cheeks -->
+                        <ellipse cx="30" cy="76" rx="5" ry="3" fill="#FF8DA1" opacity="0.8" />
+                        <ellipse cx="70" cy="76" rx="5" ry="3" fill="#FF8DA1" opacity="0.8" />
+                        <!-- Smile -->
+                        <path d="M 42 80 Q 50 88 58 80" stroke="#333" stroke-width="3" fill="none" stroke-linecap="round" />
+                        <!-- Highlight -->
+                        <path d="M 30 45 C 25 55 20 68 20 78" stroke="#FFA8B6" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.6" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-tight text-blush-deep leading-none">Blush Flow</h1>
+                    <p class="text-[10px] font-bold text-blush-accent uppercase tracking-wider mt-0.5">Sweet Cycle Care</p>
+                </div>
+            </div>
+            
+            <button onclick="app.openLogModal(new Date())" class="bg-gradient-to-r from-blush-primary to-blush-deep text-white px-3.5 py-1.5 rounded-full text-xs font-extrabold shadow-cute flex items-center space-x-1 hover:opacity-90 active:scale-95 transition-all">
+                <i class="fa-solid fa-plus text-xs"></i>
+                <span>Log Today</span>
+            </button>
+        </header>
+
+        <!-- MAIN APP CONTENT AREA -->
+        <main id="app-viewport" class="flex-1 overflow-y-auto no-scrollbar px-4 pt-1 pb-24 relative">
+            
+            <!-- VIEW: CALENDAR (Default) -->
+            <section id="view-calendar" class="space-y-3">
+                <!-- Status Banner Card -->
+                <div id="status-card" class="bg-blush-card rounded-3xl p-4 shadow-cute border border-pink-100 flex items-center justify-between relative overflow-hidden">
+                    <div class="space-y-1 z-10">
+                        <span id="cycle-phase-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-pink-100 text-blush-deep inline-block">
+                            Calculated Cycle
+                        </span>
+                        <h2 id="status-title" class="text-lg font-black text-text-main">Day -- of Cycle</h2>
+                        <p id="status-subtitle" class="text-xs font-semibold text-gray-500">Log past cycles to begin</p>
+                    </div>
+                    <!-- Mascot Illustration Mini -->
+                    <div id="mascot-status-icon" class="w-14 h-14 relative flex-shrink-0 animate-bounce-cute">
+                        <!-- SVG Mascot Rendered Dynamically -->
+                    </div>
+                </div>
+
+                <!-- Calendar Header / Controls -->
+                <div class="bg-blush-card rounded-3xl p-3 shadow-cute border border-pink-100">
+                    <div class="flex items-center justify-between mb-3 px-2">
+                        <button onclick="app.changeMonth(-1)" class="w-8 h-8 rounded-full bg-blush-bg text-blush-deep flex items-center justify-center hover:bg-pink-200 transition-colors">
+                            <i class="fa-solid fa-chevron-left text-xs"></i>
+                        </button>
+                        <h2 id="calendar-month-year" class="text-base font-black text-text-main">
+                            October 2026
+                        </h2>
+                        <button onclick="app.changeMonth(1)" class="w-8 h-8 rounded-full bg-blush-bg text-blush-deep flex items-center justify-center hover:bg-pink-200 transition-colors">
+                            <i class="fa-solid fa-chevron-right text-xs"></i>
+                        </button>
+                    </div>
+
+                    <!-- Weekday Headers -->
+                    <div class="grid grid-cols-7 text-center mb-1">
+                        <span class="text-[11px] font-extrabold text-blush-accent">S</span>
+                        <span class="text-[11px] font-extrabold text-gray-400">M</span>
+                        <span class="text-[11px] font-extrabold text-gray-400">T</span>
+                        <span class="text-[11px] font-extrabold text-gray-400">W</span>
+                        <span class="text-[11px] font-extrabold text-gray-400">T</span>
+                        <span class="text-[11px] font-extrabold text-gray-400">F</span>
+                        <span class="text-[11px] font-extrabold text-blush-accent">S</span>
+                    </div>
+
+                    <!-- Calendar Grid -->
+                    <div id="calendar-days-grid" class="grid grid-cols-7 gap-1">
+                        <!-- Dynamic Calendar Cells Loaded via JS -->
+                    </div>
+                </div>
+
+                <!-- Color Key / Legend -->
+                <div class="bg-blush-card rounded-2xl p-3 shadow-cute-sm border border-pink-100 grid grid-cols-2 gap-2 text-[11px] font-bold">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-5 h-5 rounded-md bg-period-red-bg flex items-center justify-center text-period-red border border-red-200">
+                            <i class="fa-solid fa-droplet text-xs"></i>
+                        </div>
+                        <span class="text-gray-600">Period Day</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-5 h-5 rounded-md border-2 border-dashed border-blush-primary bg-pink-50/50 flex items-center justify-center text-blush-primary">
+                            <i class="fa-solid fa-droplet text-[10px]"></i>
+                        </div>
+                        <span class="text-gray-600">Predicted Period</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-5 h-5 rounded-md bg-purple-100 flex items-center justify-center text-heart-protected">
+                            <i class="fa-solid fa-heart text-xs"></i>
+                        </div>
+                        <span class="text-gray-600">Protected Sex</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-5 h-5 rounded-md bg-red-100 flex items-center justify-center text-heart-unprotected">
+                            <i class="fa-solid fa-heart text-xs"></i>
+                        </div>
+                        <span class="text-gray-600">Unprotected Sex</span>
+                    </div>
+                    <div class="flex items-center space-x-2 col-span-2">
+                        <div class="w-5 h-5 rounded-md bg-amber-100 flex items-center justify-center text-amber-500">
+                            <i class="fa-solid fa-star text-xs"></i>
+                        </div>
+                        <span class="text-gray-600">Ovulation Window</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: DEDICATED TIPS & ENCOURAGEMENT TAB -->
+            <section id="view-tips" class="hidden space-y-3">
+                <!-- Header Banner Card -->
+                <div class="bg-blush-card rounded-3xl p-4 shadow-cute border border-pink-100 space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span id="tips-phase-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-pink-100 text-blush-deep">
+                            Phase Guidance
+                        </span>
+                        <span id="tips-day-badge" class="text-xs font-black text-gray-500">Day --</span>
+                    </div>
+                    <h2 id="tips-title" class="text-lg font-black text-text-main flex items-center space-x-2">
+                        <span>Today's Cycle Advice</span>
+                    </h2>
+                    <p id="tips-subtitle" class="text-xs font-bold text-gray-500">
+                        Tailored health tips based on where you are in your cycle right now.
+                    </p>
+                </div>
+
+                <!-- Main Highlight Advice Card -->
+                <div class="bg-gradient-to-br from-pink-50 via-rose-50 to-blush-bg rounded-3xl p-5 shadow-cute border border-pink-100 space-y-3">
+                    <div class="flex items-center space-x-2 text-blush-deep font-black text-xs">
+                        <span class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-blush-deep shadow-sm text-sm">
+                            <i id="tips-icon" class="fa-solid fa-mug-hot"></i>
+                        </span>
+                        <span id="tips-category-title" class="uppercase tracking-wider text-xs">Cycle Care Tip</span>
+                    </div>
+
+                    <p id="tip-text" class="text-sm font-bold text-text-main leading-relaxed">
+                        If you're menstruating, try drinking something warm like chamomile tea and avoid icy cold drinks to soothe cramps!
+                    </p>
+
+                    <div class="pt-2 flex justify-end">
+                        <button onclick="app.cycleTip()" class="text-xs font-extrabold text-white bg-blush-deep hover:bg-blush-primary px-3 py-1.5 rounded-full transition-all shadow-sm flex items-center space-x-1.5">
+                            <span>Get Another Tip</span>
+                            <i class="fa-solid fa-arrow-rotate-right text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Next Phase Prep Card -->
+                <div id="prep-card" class="bg-blush-card rounded-3xl p-4 shadow-cute border border-pink-100 space-y-2">
+                    <div class="flex items-center space-x-2 text-blush-deep">
+                        <i class="fa-solid fa-sparkles text-sm"></i>
+                        <h3 class="text-xs font-black uppercase tracking-wider">Cycle Readiness & Encouragement</h3>
+                    </div>
+                    <p id="prep-text" class="text-xs font-bold text-gray-600 leading-relaxed">
+                        Get ready! Your next period is coming up soon. Keep a heating pad nearby and stay hydrated.
+                    </p>
+                </div>
+            </section>
+
+            <!-- VIEW: INSIGHTS & ANALYTICS -->
+            <section id="view-insights" class="hidden space-y-3">
+                <div class="bg-blush-card rounded-3xl p-4 shadow-cute border border-pink-100 space-y-3">
+                    <h2 class="text-base font-black text-text-main flex items-center space-x-2">
+                        <i class="fa-solid fa-chart-pie text-blush-primary"></i>
+                        <span>Cycle Statistics</span>
+                    </h2>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-blush-bg p-3 rounded-2xl border border-pink-200/60">
+                            <p class="text-[11px] font-bold text-gray-500">Average Cycle</p>
+                            <p id="stat-avg-cycle" class="text-2xl font-black text-blush-deep mt-0.5">28 <span class="text-xs font-bold text-gray-600">days</span></p>
+                        </div>
+                        <div class="bg-blush-bg p-3 rounded-2xl border border-pink-200/60">
+                            <p class="text-[11px] font-bold text-gray-500">Average Period</p>
+                            <p id="stat-avg-period" class="text-2xl font-black text-blush-deep mt-0.5">5 <span class="text-xs font-bold text-gray-600">days</span></p>
+                        </div>
+                    </div>
+
+                    <div class="bg-pink-50 p-3 rounded-2xl border border-pink-100 space-y-1">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-black text-text-main">Next Predicted Period</span>
+                            <span id="stat-next-period-date" class="text-xs font-black text-blush-deep">Oct 28</span>
+                        </div>
+                        <p class="text-[11px] font-semibold text-gray-500">Based on standard 28-day cycle calculations.</p>
+                    </div>
+
+                    <div class="bg-amber-50 p-3 rounded-2xl border border-amber-100 space-y-1">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-black text-amber-900">Next Ovulation Day</span>
+                            <span id="stat-next-ovulation-date" class="text-xs font-black text-amber-600">Oct 14</span>
+                        </div>
+                        <p class="text-[11px] font-semibold text-amber-700/80">Estimated peak fertility time frame.</p>
+                    </div>
+                </div>
+
+                <!-- History List Card -->
+                <div class="bg-blush-card rounded-3xl p-4 shadow-cute border border-pink-100 space-y-3">
+                    <h2 class="text-base font-black text-text-main flex items-center space-x-2">
+                        <i class="fa-solid fa-clock-rotate-left text-blush-primary"></i>
+                        <span>Recent Cycles</span>
+                    </h2>
+                    <div id="cycle-history-list" class="space-y-2">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: SETTINGS -->
+            <section id="view-settings" class="hidden space-y-3">
+                <div class="bg-blush-card rounded-3xl p-4 shadow-cute border border-pink-100 space-y-4">
+                    <h2 class="text-base font-black text-text-main flex items-center space-x-2">
+                        <i class="fa-solid fa-gear text-blush-primary"></i>
+                        <span>Cycle Settings</span>
+                    </h2>
+
+                    <div class="space-y-3 text-xs font-bold">
+                        <div>
+                            <label class="block text-gray-600 mb-1">Average Cycle Length (Days)</label>
+                            <input type="number" id="setting-cycle-length" value="28" min="20" max="45" class="w-full bg-blush-bg border border-pink-200 rounded-xl p-2.5 text-text-main font-bold focus:outline-none focus:ring-2 focus:ring-blush-primary">
+                        </div>
+                        <div>
+                            <label class="block text-gray-600 mb-1">Average Period Duration (Days)</label>
+                            <input type="number" id="setting-period-length" value="5" min="2" max="10" class="w-full bg-blush-bg border border-pink-200 rounded-xl p-2.5 text-text-main font-bold focus:outline-none focus:ring-2 focus:ring-blush-primary">
+                        </div>
+                        <button onclick="app.saveSettings()" class="w-full bg-blush-primary text-white py-2.5 rounded-xl font-black shadow-cute hover:opacity-90 active:scale-95 transition-all">
+                            Save Settings
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Data Reset & Re-Onboard -->
+                <div class="bg-blush-card rounded-3xl p-4 shadow-cute border border-pink-100 space-y-3">
+                    <h2 class="text-base font-black text-text-main">Data Management</h2>
+                    <p class="text-xs text-gray-500 font-semibold">Need to recalibrate? You can re-enter your 3-month history or erase device storage.</p>
+                    <div class="flex flex-col space-y-2">
+                        <button onclick="app.openOnboarding()" class="w-full bg-pink-100 text-blush-deep py-2 rounded-xl text-xs font-black hover:bg-pink-200 transition-colors">
+                            <i class="fa-solid fa-rotate text-xs mr-1"></i> Re-enter 3-Month Cycle Dates
+                        </button>
+                        <button onclick="app.resetAllData()" class="w-full bg-red-50 text-red-500 py-2 rounded-xl text-xs font-black hover:bg-red-100 transition-colors">
+                            <i class="fa-solid fa-trash-can text-xs mr-1"></i> Clear Local Data
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- CUTE BOTTOM NAVIGATION BAR (iOS Style) -->
+        <nav class="absolute bottom-0 left-0 right-0 bg-blush-card/95 backdrop-blur-md border-t border-pink-100 px-4 py-2 flex justify-between items-center z-40">
+            <button onclick="app.switchTab('calendar')" id="nav-calendar" class="flex flex-col items-center space-y-0.5 text-blush-primary transition-colors w-12">
+                <i class="fa-solid fa-calendar-days text-lg"></i>
+                <span class="text-[10px] font-black tracking-tight">Calendar</span>
+            </button>
+
+            <button onclick="app.switchTab('tips')" id="nav-tips" class="flex flex-col items-center space-y-0.5 text-gray-400 hover:text-blush-primary transition-colors w-12">
+                <i class="fa-solid fa-lightbulb text-lg"></i>
+                <span class="text-[10px] font-black tracking-tight">Tips</span>
+            </button>
+            
+            <!-- Centered Main Log Action Button -->
+            <button onclick="app.openLogModal(new Date())" class="flex flex-col items-center justify-center -mt-6 bg-gradient-to-tr from-blush-primary to-blush-deep text-white w-14 h-14 rounded-full shadow-cute hover:scale-105 active:scale-95 transition-all border-4 border-blush-bg">
+                <i class="fa-solid fa-plus text-xl"></i>
+            </button>
+
+            <button onclick="app.switchTab('insights')" id="nav-insights" class="flex flex-col items-center space-y-0.5 text-gray-400 hover:text-blush-primary transition-colors w-12">
+                <i class="fa-solid fa-chart-line text-lg"></i>
+                <span class="text-[10px] font-black tracking-tight">Insights</span>
+            </button>
+            <button onclick="app.switchTab('settings')" id="nav-settings" class="flex flex-col items-center space-y-0.5 text-gray-400 hover:text-blush-primary transition-colors w-12">
+                <i class="fa-solid fa-heart-pulse text-lg"></i>
+                <span class="text-[10px] font-black tracking-tight">Settings</span>
+            </button>
+        </nav>
+
+        <!-- MASCOT TOAST NOTIFICATION -->
+        <div id="mascot-toast" class="absolute top-12 left-4 right-4 bg-white/95 backdrop-blur-md rounded-2xl p-3 shadow-2xl border border-pink-200 z-50 flex items-center space-x-3 transition-all duration-300 -translate-y-20 opacity-0 pointer-events-none">
+            <div class="w-8 h-8 flex-shrink-0">
+                <svg viewBox="0 0 100 120" class="w-full h-full">
+                    <path d="M50 5 C50 5 10 55 10 80 C10 102 28 115 50 115 C72 115 90 102 90 80 C90 55 50 5 50 5 Z" fill="#FF4D6D" />
+                    <ellipse cx="38" cy="70" rx="4" ry="6" fill="#333" />
+                    <ellipse cx="62" cy="70" rx="4" ry="6" fill="#333" />
+                    <circle cx="36" cy="68" r="1.5" fill="#FFF" />
+                    <circle cx="60" cy="68" r="1.5" fill="#FFF" />
+                    <ellipse cx="30" cy="76" rx="5" ry="3" fill="#FF8DA1" opacity="0.8" />
+                    <ellipse cx="70" cy="76" rx="5" ry="3" fill="#FF8DA1" opacity="0.8" />
+                    <path d="M 42 80 Q 50 88 58 80" stroke="#333" stroke-width="3" fill="none" stroke-linecap="round" />
+                </svg>
+            </div>
+            <p id="mascot-toast-text" class="text-xs font-bold text-text-main flex-1">Hello! I'm your Blush Flow assistant!</p>
+        </div>
+
+        <!-- MODAL: DAILY LOG ENTRY (Bottom Drawer) -->
+        <div id="modal-log" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-end justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+            <div class="bg-blush-card w-full max-w-[412px] rounded-t-3xl p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto no-scrollbar">
+                <div class="flex justify-between items-center border-b border-pink-100 pb-2">
+                    <div>
+                        <span id="log-modal-date" class="text-xs font-black text-blush-deep uppercase tracking-wider">Date</span>
+                        <h3 class="text-lg font-black text-text-main">Log Cycle Details</h3>
+                    </div>
+                    <button onclick="app.closeLogModal()" class="w-8 h-8 rounded-full bg-blush-bg text-gray-500 flex items-center justify-center hover:bg-pink-100">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+
+                <!-- Menstruation Flow Selection -->
+                <div class="space-y-2">
+                    <label class="text-xs font-extrabold text-gray-600 block">Menstrual Flow</label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button type="button" onclick="app.selectFlow('heavy')" id="flow-heavy" class="flow-btn border border-pink-100 rounded-2xl p-2.5 flex flex-col items-center justify-center space-y-1 hover:bg-pink-50">
+                            <i class="fa-solid fa-droplet text-period-red text-base"></i>
+                            <span class="text-[11px] font-black text-text-main">Heavy</span>
+                        </button>
+                        <button type="button" onclick="app.selectFlow('medium')" id="flow-medium" class="flow-btn border border-pink-100 rounded-2xl p-2.5 flex flex-col items-center justify-center space-y-1 hover:bg-pink-50">
+                            <i class="fa-solid fa-droplet text-period-red/80 text-sm"></i>
+                            <span class="text-[11px] font-black text-text-main">Medium</span>
+                        </button>
+                        <button type="button" onclick="app.selectFlow('light')" id="flow-light" class="flow-btn border border-pink-100 rounded-2xl p-2.5 flex flex-col items-center justify-center space-y-1 hover:bg-pink-50">
+                            <i class="fa-solid fa-droplet text-period-red/60 text-xs"></i>
+                            <span class="text-[11px] font-black text-text-main">Light</span>
+                        </button>
+                        <button type="button" onclick="app.selectFlow('none')" id="flow-none" class="flow-btn border border-pink-100 rounded-2xl p-2.5 flex flex-col items-center justify-center space-y-1 hover:bg-pink-50">
+                            <i class="fa-solid fa-ban text-gray-300 text-xs"></i>
+                            <span class="text-[11px] font-black text-text-main">None</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Intercourse Protection Selection -->
+                <div class="space-y-2">
+                    <label class="text-xs font-extrabold text-gray-600 block">Intercourse Activity</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" onclick="app.selectIntercourse('protected')" id="sex-protected" class="sex-btn border border-pink-100 rounded-2xl p-2.5 flex flex-col items-center justify-center space-y-1 hover:bg-pink-50">
+                            <i class="fa-solid fa-heart text-heart-protected text-base"></i>
+                            <span class="text-[11px] font-black text-text-main">Protected</span>
+                        </button>
+                        <button type="button" onclick="app.selectIntercourse('unprotected')" id="sex-unprotected" class="sex-btn border border-pink-100 rounded-2xl p-2.5 flex flex-col items-center justify-center space-y-1 hover:bg-pink-50">
+                            <i class="fa-solid fa-heart text-heart-unprotected text-base"></i>
+                            <span class="text-[11px] font-black text-text-main">Unprotected</span>
+                        </button>
+                        <button type="button" onclick="app.selectIntercourse('none')" id="sex-none" class="sex-btn border border-pink-100 rounded-2xl p-2.5 flex flex-col items-center justify-center space-y-1 hover:bg-pink-50">
+                            <i class="fa-solid fa-ban text-gray-300 text-xs"></i>
+                            <span class="text-[11px] font-black text-text-main">None</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Notes / Symptoms -->
+                <div class="space-y-1">
+                    <label class="text-xs font-extrabold text-gray-600 block">Notes & Symptoms</label>
+                    <input type="text" id="log-note" placeholder="Cramps, mood, energy, cravings..." class="w-full bg-blush-bg border border-pink-200 rounded-2xl p-3 text-xs font-bold text-text-main focus:outline-none focus:ring-2 focus:ring-blush-primary">
+                </div>
+
+                <!-- Submit Button -->
+                <button onclick="app.saveLogEntry()" class="w-full bg-gradient-to-r from-blush-primary to-blush-deep text-white py-3 rounded-2xl font-black text-sm shadow-cute hover:opacity-90 active:scale-95 transition-all">
+                    Save Log
+                </button>
+            </div>
+        </div>
+
+        <!-- MODAL: 3-MONTH ONBOARDING INITIALIZATION -->
+        <div id="modal-onboarding" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+            <div class="bg-blush-card w-full max-w-[360px] rounded-3xl p-5 shadow-2xl space-y-4 border border-pink-100">
+                <div class="text-center space-y-1">
+                    <div class="w-16 h-16 mx-auto animate-gentle">
+                        <svg viewBox="0 0 100 120" class="w-full h-full">
+                            <path d="M50 5 C50 5 10 55 10 80 C10 102 28 115 50 115 C72 115 90 102 90 80 C90 55 50 5 50 5 Z" fill="#FF4D6D" />
+                            <ellipse cx="38" cy="70" rx="4" ry="6" fill="#333" />
+                            <ellipse cx="62" cy="70" rx="4" ry="6" fill="#333" />
+                            <circle cx="36" cy="68" r="1.5" fill="#FFF" />
+                            <circle cx="60" cy="68" r="1.5" fill="#FFF" />
+                            <ellipse cx="30" cy="76" rx="5" ry="3" fill="#FF8DA1" opacity="0.8" />
+                            <ellipse cx="70" cy="76" rx="5" ry="3" fill="#FF8DA1" opacity="0.8" />
+                            <path d="M 42 80 Q 50 88 58 80" stroke="#333" stroke-width="3" fill="none" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-black text-blush-deep">Welcome to Blush Flow!</h3>
+                    <p class="text-xs font-bold text-gray-500">To calculate your projections, enter the start dates of your last 3 periods.</p>
+                </div>
+
+                <form onsubmit="app.submitOnboarding(event)" class="space-y-3">
+                    <div>
+                        <label class="block text-[11px] font-black text-gray-600 mb-1">Most Recent Period Start</label>
+                        <input type="date" id="onboard-m1" required class="w-full bg-blush-bg border border-pink-200 rounded-xl p-2.5 text-xs font-bold text-text-main focus:outline-none focus:ring-2 focus:ring-blush-primary">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-black text-gray-600 mb-1">Previous Month Period Start</label>
+                        <input type="date" id="onboard-m2" required class="w-full bg-blush-bg border border-pink-200 rounded-xl p-2.5 text-xs font-bold text-text-main focus:outline-none focus:ring-2 focus:ring-blush-primary">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-black text-gray-600 mb-1">3 Months Ago Period Start</label>
+                        <input type="date" id="onboard-m3" required class="w-full bg-blush-bg border border-pink-200 rounded-xl p-2.5 text-xs font-bold text-text-main focus:outline-none focus:ring-2 focus:ring-blush-primary">
+                    </div>
+
+                    <button type="submit" class="w-full bg-blush-primary text-white py-3 rounded-2xl font-black text-sm shadow-cute hover:opacity-90 active:scale-95 transition-all mt-2">
+                        Calculate My Cycle ✨
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+<script>
+        class BlushFlowApp {
+            constructor() {
+                this.currentViewDate = new Date(); // Date being viewed on calendar
+                this.selectedLogDate = null;       // Date currently open in modal
+                
+                // User Cycle Data
+                this.cycleLogs = {};              // Format: { 'YYYY-MM-DD': { flow: 'heavy/medium/light/none', intercourse: 'protected/unprotected/none', note: '' } }
+                this.periodStartDates = [];       // Array of sorted YYYY-MM-DD strings
+                this.settings = {
+                    avgCycleLength: 28,
+                    avgPeriodDuration: 5,
+                    lutealPhase: 14 // Standard ovulation = Cycle Length - 14
+                };
+
+                // Temporary states for log modal
+                this.tempFlow = 'none';
+                this.tempIntercourse = 'none';
+
+                // Health & Encouragement Tips Library
+                this.tipsLibrary = {
+                    menstruation: [
+                        "If you're menstruating, try drinking something warm like chamomile tea and avoid icy cold drinks to soothe cramps! ☕",
+                        "Stay extra hydrated today! Warm tea and a heated pouch work wonders during period days. 🍵",
+                        "Be gentle with yourself today. Light stretching or resting with a blanket helps relax pelvic muscles. 🌸",
+                        "Rich iron-dense snacks like spinach, dark chocolate, or berries are great for your flow days! 🍫"
+                    ],
+                    ovulation: [
+                        "During ovulation, your energy is naturally high—great time for light workouts and creative projects! ✨",
+                        "Your skin might be glowing today! Stay hydrated to keep that peak fertility energy going. 🌟",
+                        "Energy levels are at their peak! Enjoy outdoor walks or gentle yoga sessions today. 🌿"
+                    ],
+                    follicular: [
+                        "Your body is building energy for the middle of your cycle! Fresh greens and light meals feel great now. 🥗",
+                        "A great phase to set new goals or plan cozy outings—your mood and focus are rising! 🌸"
+                    ],
+                    luteal: [
+                        "Luteal phase care: cozy up with warm soups, magnesium-rich foods, and get plenty of rest before your period! 🌙",
+                        "Feeling a bit sluggish? Take it slow and try warm baths with lavender oil to relax. 🛁"
+                    ]
+                };
+                this.currentTipIndex = 0;
+
+                this.init();
+            }
+
+            init() {
+                this.updateClock();
+                setInterval(() => this.updateClock(), 30000);
+
+                this.loadFromLocalStorage();
+
+                // If no period start dates exist, trigger Onboarding setup
+                if (!this.periodStartDates || this.periodStartDates.length === 0) {
+                    this.openOnboarding();
+                } else {
+                    this.renderCalendar();
+                    this.updateStatusCard();
+                    this.updateTips();
+                }
+            }
+
+            updateClock() {
+                const now = new Date();
+                const hours = now.getHours().toString().padStart(2, '0');
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                const timeEl = document.getElementById('ios-time');
+                if (timeEl) timeEl.innerText = `${hours}:${minutes}`;
+            }
+
+            // --- LOCAL STORAGE MANAGEMENT ---
+            loadFromLocalStorage() {
+                const storedLogs = localStorage.getItem('blush_flow_logs');
+                const storedStarts = localStorage.getItem('blush_flow_starts');
+                const storedSettings = localStorage.getItem('blush_flow_settings');
+
+                if (storedLogs) this.cycleLogs = JSON.parse(storedLogs);
+                if (storedStarts) this.periodStartDates = JSON.parse(storedStarts);
+                if (storedSettings) this.settings = JSON.parse(storedSettings);
+
+                // Populate settings UI inputs
+                const cInput = document.getElementById('setting-cycle-length');
+                const pInput = document.getElementById('setting-period-length');
+                if (cInput) cInput.value = this.settings.avgCycleLength;
+                if (pInput) pInput.value = this.settings.avgPeriodDuration;
+            }
+
+            saveToLocalStorage() {
+                localStorage.setItem('blush_flow_logs', JSON.stringify(this.cycleLogs));
+                localStorage.setItem('blush_flow_starts', JSON.stringify(this.periodStartDates));
+                localStorage.setItem('blush_flow_settings', JSON.stringify(this.settings));
+            }
+
+            // --- ONBOARDING & CYCLE CALCULATIONS ---
+            openOnboarding() {
+                const modal = document.getElementById('modal-onboarding');
+                if (modal) {
+                    modal.classList.remove('opacity-0', 'pointer-events-none');
+                }
+
+                // Set default date inputs to reasonable past dates
+                const today = new Date();
+                const m1 = new Date(today); m1.setDate(today.getDate() - 14);
+                const m2 = new Date(today); m2.setDate(today.getDate() - 42);
+                const m3 = new Date(today); m3.setDate(today.getDate() - 70);
+
+                const el1 = document.getElementById('onboard-m1');
+                const el2 = document.getElementById('onboard-m2');
+                const el3 = document.getElementById('onboard-m3');
+
+                if (el1) el1.value = m1.toISOString().split('T')[0];
+                if (el2) el2.value = m2.toISOString().split('T')[0];
+                if (el3) el3.value = m3.toISOString().split('T')[0];
+            }
+
+            submitOnboarding(event) {
+                event.preventDefault();
+                const d1 = document.getElementById('onboard-m1').value;
+                const d2 = document.getElementById('onboard-m2').value;
+                const d3 = document.getElementById('onboard-m3').value;
+
+                if (!d1 || !d2 || !d3) return;
+
+                // Sort dates ascending
+                const dates = [d1, d2, d3].sort();
+                this.periodStartDates = dates;
+
+                // Mark flow logs for those past period start dates (5-day standard duration)
+                dates.forEach(startDateStr => {
+                    const startDate = new Date(startDateStr + 'T00:00:00');
+                    for (let i = 0; i < this.settings.avgPeriodDuration; i++) {
+                        const day = new Date(startDate);
+                        day.setDate(startDate.getDate() + i);
+                        const key = this.formatDateKey(day);
+                        
+                        if (!this.cycleLogs[key]) {
+                            this.cycleLogs[key] = {
+                                flow: i === 0 ? 'heavy' : (i < 3 ? 'medium' : 'light'),
+                                intercourse: 'none',
+                                note: 'Historical record'
+                            };
+                        }
+                    }
+                });
+
+                // Calculate average cycle length from 3 months if possible
+                const diff1 = (new Date(dates[1]) - new Date(dates[0])) / (1000 * 60 * 60 * 24);
+                const diff2 = (new Date(dates[2]) - new Date(dates[1])) / (1000 * 60 * 60 * 24);
+                if (diff1 > 15 && diff2 > 15) {
+                    this.settings.avgCycleLength = Math.round((diff1 + diff2) / 2);
+                    const cInput = document.getElementById('setting-cycle-length');
+                    if (cInput) cInput.value = this.settings.avgCycleLength;
+                }
+
+                this.saveToLocalStorage();
+
+                // Close modal & render
+                const modal = document.getElementById('modal-onboarding');
+                if (modal) modal.classList.add('opacity-0', 'pointer-events-none');
+                
+                this.renderCalendar();
+                this.updateStatusCard();
+                this.renderInsights();
+                this.toast("Cycle setup complete! Welcome to Blush Flow!");
+            }
+
+            // --- CALENDAR ENGINE & ALGORITHMS ---
+            renderCalendar() {
+                const monthYearHeader = document.getElementById('calendar-month-year');
+                const daysGrid = document.getElementById('calendar-days-grid');
+                if (!daysGrid) return;
+                daysGrid.innerHTML = '';
+
+                const year = this.currentViewDate.getFullYear();
+                const month = this.currentViewDate.getMonth();
+
+                // Month Name
+                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                if (monthYearHeader) monthYearHeader.innerText = `${monthNames[month]} ${year}`;
+
+                // Calculate Grid Structure
+                const firstDayOfMonth = new Date(year, month, 1);
+                const lastDayOfMonth = new Date(year, month + 1, 0);
+                const daysInMonth = lastDayOfMonth.getDate();
+                const startingDayOfWeek = firstDayOfMonth.getDay(); // 0 = Sun
+
+                // Previous month padding
+                const prevMonthLastDay = new Date(year, month, 0).getDate();
+                for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+                    const dayNum = prevMonthLastDay - i;
+                    const prevDate = new Date(year, month - 1, dayNum);
+                    daysGrid.appendChild(this.createDayCell(prevDate, true));
+                }
+
+                // Current Month Days
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const currentDate = new Date(year, month, day);
+                    daysGrid.appendChild(this.createDayCell(currentDate, false));
+                }
+
+                // Next month padding to fill 35/42 cells
+                const totalCells = daysGrid.children.length;
+                const remainingCells = (totalCells > 35 ? 42 : 35) - totalCells;
+                for (let i = 1; i <= remainingCells; i++) {
+                    const nextDate = new Date(year, month + 1, i);
+                    daysGrid.appendChild(this.createDayCell(nextDate, true));
+                }
+            }
+
+            changeMonth(delta) {
+                this.currentViewDate.setMonth(this.currentViewDate.getMonth() + delta);
+                this.renderCalendar();
+            }
+
+            createDayCell(date, isPadding) {
+                const key = this.formatDateKey(date);
+                const todayKey = this.formatDateKey(new Date());
+                const isToday = key === todayKey;
+
+                const cell = document.createElement('div');
+                cell.className = `calendar-day relative rounded-2xl p-1 flex flex-col items-center justify-between cursor-pointer border ${
+                    isPadding ? 'opacity-30 border-transparent' : 'border-pink-50 hover:border-pink-300 bg-white'
+                } ${isToday ? 'ring-2 ring-blush-primary bg-pink-50/50' : ''}`;
+
+                cell.onclick = () => this.openLogModal(date);
+
+                // Date Number Label
+                const numberLabel = document.createElement('span');
+                numberLabel.className = `text-xs font-extrabold ${isToday ? 'text-blush-deep' : (isPadding ? 'text-gray-400' : 'text-text-main')}`;
+                numberLabel.innerText = date.getDate();
+                cell.appendChild(numberLabel);
+
+                // Indicators Container
+                const indicatorsDiv = document.createElement('div');
+                indicatorsDiv.className = "flex items-center justify-center space-x-1 my-1 min-h-[22px]";
+
+                // 1. Check logged actual flow data
+                const log = this.cycleLogs[key];
+                let hasActualPeriod = false;
+
+                if (log && log.flow && log.flow !== 'none') {
+                    hasActualPeriod = true;
+                    // Red blood drop indicator for logged period
+                    const drop = document.createElement('div');
+                    drop.className = 'text-period-red text-xs animate-gentle';
+                    drop.innerHTML = '<i class="fa-solid fa-droplet"></i>';
+                    indicatorsDiv.appendChild(drop);
+                }
+
+                // 2. Check intercourse activity
+                if (log && log.intercourse && log.intercourse !== 'none') {
+                    const heart = document.createElement('div');
+                    if (log.intercourse === 'protected') {
+                        heart.className = 'text-heart-protected text-xs';
+                        heart.innerHTML = '<i class="fa-solid fa-heart"></i>';
+                    } else if (log.intercourse === 'unprotected') {
+                        heart.className = 'text-heart-unprotected text-xs';
+                        heart.innerHTML = '<i class="fa-solid fa-heart"></i>';
+                    }
+                    indicatorsDiv.appendChild(heart);
+                }
+
+                // 3. Projected Calculations
+                const projection = this.getCycleProjectionForDate(date);
+
+                if (!hasActualPeriod && projection.isProjectedPeriod) {
+                    const projDrop = document.createElement('div');
+                    projDrop.className = 'text-blush-primary opacity-80 text-xs border-b border-dashed border-blush-primary';
+                    projDrop.innerHTML = '<i class="fa-solid fa-droplet"></i>';
+                    indicatorsDiv.appendChild(projDrop);
+                }
+
+                if (projection.isOvulation) {
+                    const star = document.createElement('div');
+                    star.className = 'text-amber-400 text-xs animate-bounce-cute';
+                    star.innerHTML = '<i class="fa-solid fa-star"></i>';
+                    indicatorsDiv.appendChild(star);
+                }
+
+                cell.appendChild(indicatorsDiv);
+                return cell;
+            }
+
+            updateStatusCard() {
+                if (!this.periodStartDates || this.periodStartDates.length === 0) return;
+
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                const lastStartStr = this.periodStartDates[this.periodStartDates.length - 1];
+                const lastStart = new Date(lastStartStr + 'T00:00:00');
+
+                const diffTime = Math.abs(today - lastStart);
+                const currentCycleDay = (Math.floor(diffTime / (1000 * 60 * 60 * 24)) % this.settings.avgCycleLength) + 1;
+
+                const badge = document.getElementById('cycle-phase-badge');
+                const title = document.getElementById('status-title');
+                const subtitle = document.getElementById('status-subtitle');
+                const mascotIcon = document.getElementById('mascot-status-icon');
+
+                if (title) title.innerText = `Day ${currentCycleDay} of Cycle`;
+
+                const periodDuration = this.settings.avgPeriodDuration;
+                const ovulationDay = this.settings.avgCycleLength - this.settings.lutealPhase;
+
+                if (currentCycleDay <= periodDuration) {
+                    if (badge) badge.innerText = "Menstruation Phase";
+                    if (subtitle) subtitle.innerText = "Keep warm and stay cozy today! ✨";
+                } else if (currentCycleDay === ovulationDay) {
+                    if (badge) badge.innerText = "Ovulation Day";
+                    if (subtitle) subtitle.innerText = "Peak fertility and high energy day! 🌟";
+                } else if (currentCycleDay > ovulationDay - 3 && currentCycleDay < ovulationDay) {
+                    if (badge) badge.innerText = "Fertile Window";
+                    if (subtitle) subtitle.innerText = "Approaching ovulation window. 💕";
+                } else {
+                    if (badge) badge.innerText = "Follicular / Luteal Phase";
+                    if (subtitle) subtitle.innerText = "Your body is in its steady cycle phase.";
+                }
+
+                if (mascotIcon) {
+                    mascotIcon.innerHTML = `
+                        <svg viewBox="0 0 100 120" class="w-full h-full">
+                            <path d="M50 5 C50 5 10 55 10 80 C10 102 28 115 50 115 C72 115 90 102 90 80 C90 55 50 5 50 5 Z" fill="#FF4D6D" />
+                            <ellipse cx="38" cy="70" rx="4" ry="6" fill="#333" />
+                            <ellipse cx="62" cy="70" rx="4" ry="6" fill="#333" />
+                            <circle cx="36" cy="68" r="1.5" fill="#FFF" />
+                            <circle cx="60" cy="68" r="1.5" fill="#FFF" />
+                            <ellipse cx="30" cy="76" rx="5" ry="3" fill="#FF8DA1" opacity="0.8" />
+                            <ellipse cx="70" cy="76" rx="5" ry="3" fill="#FF8DA1" opacity="0.8" />
+                            <path d="M 42 80 Q 50 88 58 80" stroke="#333" stroke-width="3" fill="none" stroke-linecap="round" />
+                        </svg>
+                    `;
+                }
+            }
+
+            updateTips() {
+                if (!this.periodStartDates || this.periodStartDates.length === 0) return;
+
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                const lastStartStr = this.periodStartDates[this.periodStartDates.length - 1];
+                const lastStart = new Date(lastStartStr + 'T00:00:00');
+
+                const diffTime = Math.abs(today - lastStart);
+                const currentCycleDay = (Math.floor(diffTime / (1000 * 60 * 60 * 24)) % this.settings.avgCycleLength) + 1;
+                const cycleLen = this.settings.avgCycleLength;
+                const periodDuration = this.settings.avgPeriodDuration;
+                const ovulationDay = cycleLen - this.settings.lutealPhase;
+
+                let category = 'follicular';
+                let phaseName = 'Follicular Phase';
+                let iconClass = 'fa-solid fa-seedling';
+                let prepNotice = "Your energy is starting to build up! Keep standard hydration and stay consistent with healthy habits.";
+
+                if (currentCycleDay <= periodDuration) {
+                    category = 'menstruation';
+                    phaseName = 'Menstruation Phase';
+                    iconClass = 'fa-solid fa-droplet';
+                    prepNotice = "You're in your period right now! Prioritize rest, hot water bottles, warm teas, and gentle self-care.";
+                } else if (currentCycleDay === ovulationDay) {
+                    category = 'ovulation';
+                    phaseName = 'Ovulation Day';
+                    iconClass = 'fa-solid fa-star';
+                    prepNotice = "Today is peak ovulation! High vitality and fertility day. Hydrate well and enjoy your natural surge of energy.";
+                } else if (currentCycleDay > ovulationDay - 3 && currentCycleDay < ovulationDay) {
+                    phaseName = 'Approaching Ovulation';
+                    iconClass = 'fa-solid fa-wand-magic-sparkles';
+                    prepNotice = `Get ready! You are estimated to ovulate in about ${ovulationDay - currentCycleDay} day(s). Expect peak energy soon!`;
+                } else if (currentCycleDay > ovulationDay && currentCycleDay < cycleLen - 4) {
+                    category = 'luteal';
+                    phaseName = 'Luteal Phase';
+                    iconClass = 'fa-solid fa-moon';
+                    prepNotice = "Post-ovulation phase: steady energy. Great time for cozy routines and magnesium-rich snacks.";
+                } else if (currentCycleDay >= cycleLen - 4) {
+                    category = 'luteal';
+                    phaseName = 'Pre-Menstrual Prep';
+                    iconClass = 'fa-solid fa-bell';
+                    const daysUntilPeriod = cycleLen - currentCycleDay + 1;
+                    prepNotice = `Get ready for your period! Predicted to start in approximately ${daysUntilPeriod} day(s). Stock up on pads/tampons and keep a hot drink ready!`;
+                }
+
+                // Update UI elements in Tips section
+                const phaseBadge = document.getElementById('tips-phase-badge');
+                const dayBadge = document.getElementById('tips-day-badge');
+                const categoryTitle = document.getElementById('tips-category-title');
+                const tipsIcon = document.getElementById('tips-icon');
+                const prepText = document.getElementById('prep-text');
+
+                if (phaseBadge) phaseBadge.innerText = phaseName;
+                if (dayBadge) dayBadge.innerText = `Day ${currentCycleDay} of ${cycleLen}`;
+                if (categoryTitle) categoryTitle.innerText = `${phaseName} Guidance`;
+                if (tipsIcon) tipsIcon.className = `${iconClass}`;
+                if (prepText) prepText.innerText = prepNotice;
+
+                const tipsList = this.tipsLibrary[category] || this.tipsLibrary.follicular;
+                const tip = tipsList[this.currentTipIndex % tipsList.length];
+                
+                const tipElement = document.getElementById('tip-text');
+                if (tipElement) {
+                    tipElement.innerText = tip;
+                }
+            }
+
+            cycleTip() {
+                this.currentTipIndex++;
+                this.updateTips();
+            }
+
+            getCycleProjectionForDate(date) {
+                if (!this.periodStartDates || this.periodStartDates.length === 0) {
+                    return { isProjectedPeriod: false, isOvulation: false };
+                }
+
+                const lastStart = new Date(this.periodStartDates[this.periodStartDates.length - 1] + 'T00:00:00');
+                const cycleDays = this.settings.avgCycleLength;
+                const periodDuration = this.settings.avgPeriodDuration;
+                const targetTime = date.getTime();
+
+                for (let i = 0; i <= 6; i++) {
+                    const projStart = new Date(lastStart);
+                    projStart.setDate(lastStart.getDate() + (i * cycleDays));
+
+                    const projEnd = new Date(projStart);
+                    projEnd.setDate(projStart.getDate() + periodDuration - 1);
+
+                    const projOvulation = new Date(projStart);
+                    projOvulation.setDate(projStart.getDate() + (cycleDays - this.settings.lutealPhase));
+
+                    if (targetTime >= projStart.getTime() && targetTime <= projEnd.getTime()) {
+                        return { isProjectedPeriod: true, isOvulation: false };
+                    }
+
+                    if (date.toDateString() === projOvulation.toDateString()) {
+                        return { isProjectedPeriod: false, isOvulation: true };
+                    }
+                }
+
+                return { isProjectedPeriod: false, isOvulation: false };
+            }
+
+            openLogModal(date) {
+                this.selectedLogDate = date || new Date();
+                const key = this.formatDateKey(this.selectedLogDate);
+
+                const dateHeader = document.getElementById('log-modal-date');
+                if (dateHeader) dateHeader.innerText = this.selectedLogDate.toDateString();
+
+                const existing = this.cycleLogs[key] || { flow: 'none', intercourse: 'none', note: '' };
+                
+                this.selectFlow(existing.flow);
+                this.selectIntercourse(existing.intercourse);
+                const noteInput = document.getElementById('log-note');
+                if (noteInput) noteInput.value = existing.note || '';
+
+                const modal = document.getElementById('modal-log');
+                if (modal) modal.classList.remove('opacity-0', 'pointer-events-none');
+            }
+
+            closeLogModal() {
+                const modal = document.getElementById('modal-log');
+                if (modal) modal.classList.add('opacity-0', 'pointer-events-none');
+            }
+
+            selectFlow(flowType) {
+                this.tempFlow = flowType;
+                ['heavy', 'medium', 'light', 'none'].forEach(f => {
+                    const btn = document.getElementById(`flow-${f}`);
+                    if (btn) {
+                        if (f === flowType) {
+                            btn.className = "flow-btn border-2 border-blush-primary bg-pink-100 rounded-2xl p-2.5 flex flex-col items-center justify-center space-y-1 shadow-sm";
+                        } else {
+                            btn.className = "flow-btn border border-pink-100 rounded-2xl p-2.5 flex flex-col items-center justify-center space-y-1 hover:bg-pink-50";
+                        }
+                    }
+                });
+            }
+
+            selectIntercourse(sexType) {
+                this.tempIntercourse = sexType;
+                ['protected', 'unprotected', 'none'].forEach(s => {
+                    const btn = document.getElementById(`sex-${s}`);
+                    if (btn) {
+                        if (s === sexType) {
+                            btn.className = "sex-btn border-2 border-blush-primary bg-pink-100 rounded-2xl p-2.5 flex flex-col items-center justify-center space-y-1 shadow-sm";
+                        } else {
+                            btn.className = "sex-btn border border-pink-100 rounded-2xl p-2.5 flex flex-col items-center justify-center space-y-1 hover:bg-pink-50";
+                        }
+                    }
+                });
+            }
+
+            saveLogEntry() {
+                if (!this.selectedLogDate) return;
+                const key = this.formatDateKey(this.selectedLogDate);
+                const noteValue = document.getElementById('log-note')?.value || '';
+
+                this.cycleLogs[key] = {
+                    flow: this.tempFlow,
+                    intercourse: this.tempIntercourse,
+                    note: noteValue
+                };
+
+                // Check if this is a new period start day
+                if (this.tempFlow !== 'none') {
+                    if (!this.periodStartDates.includes(key)) {
+                        this.periodStartDates.push(key);
+                        this.periodStartDates.sort();
+                    }
+                }
+
+                this.saveToLocalStorage();
+                this.renderCalendar();
+                this.updateStatusCard();
+                this.updateTips();
+                this.closeLogModal();
+                this.toast("Log saved successfully!");
+            }
+
+            renderInsights() {
+                const statAvgCycle = document.getElementById('stat-avg-cycle');
+                const statAvgPeriod = document.getElementById('stat-avg-period');
+                const statNextPeriod = document.getElementById('stat-next-period-date');
+                const statNextOvulation = document.getElementById('stat-next-ovulation-date');
+                const historyList = document.getElementById('cycle-history-list');
+
+                if (statAvgCycle) statAvgCycle.innerText = `${this.settings.avgCycleLength} days`;
+                if (statAvgPeriod) statAvgPeriod.innerText = `${this.settings.avgPeriodDuration} days`;
+
+                if (this.periodStartDates.length > 0) {
+                    const lastStart = new Date(this.periodStartDates[this.periodStartDates.length - 1] + 'T00:00:00');
+                    
+                    const nextPeriod = new Date(lastStart);
+                    nextPeriod.setDate(lastStart.getDate() + this.settings.avgCycleLength);
+                    
+                    const nextOvulation = new Date(lastStart);
+                    nextOvulation.setDate(lastStart.getDate() + (this.settings.avgCycleLength - this.settings.lutealPhase));
+
+                    const options = { month: 'short', day: 'numeric' };
+                    if (statNextPeriod) statNextPeriod.innerText = nextPeriod.toLocaleDateString('en-US', options);
+                    if (statNextOvulation) statNextOvulation.innerText = nextOvulation.toLocaleDateString('en-US', options);
+                }
+
+                if (historyList) {
+                    historyList.innerHTML = '';
+                    const sortedStarts = [...this.periodStartDates].reverse();
+                    sortedStarts.forEach(dateStr => {
+                        const item = document.createElement('div');
+                        item.className = "flex justify-between items-center p-2.5 rounded-2xl bg-blush-bg border border-pink-100 text-xs font-bold text-text-main";
+                        item.innerHTML = `
+                            <div class="flex items-center space-x-2">
+                                <i class="fa-solid fa-droplet text-period-red"></i>
+                                <span>Started: ${dateStr}</span>
+                            </div>
+                            <span class="text-gray-400 font-semibold">${this.settings.avgPeriodDuration} days</span>
+                        `;
+                        historyList.appendChild(item);
+                    });
+                }
+            }
+
+            // --- NAVIGATION & CONTROLS ---
+            switchTab(tabName) {
+                // Hide all sections
+                ['calendar', 'tips', 'insights', 'settings'].forEach(t => {
+                    const view = document.getElementById(`view-${t}`);
+                    if (view) view.classList.add('hidden');
+
+                    const navBtn = document.getElementById(`nav-${t}`);
+                    if (navBtn) navBtn.className = "flex flex-col items-center space-y-0.5 text-gray-400 hover:text-blush-primary transition-colors w-12";
+                });
+
+                // Show target tab
+                const targetView = document.getElementById(`view-${tabName}`);
+                if (targetView) targetView.classList.remove('hidden');
+
+                const activeNav = document.getElementById(`nav-${tabName}`);
+                if (activeNav) activeNav.className = "flex flex-col items-center space-y-0.5 text-blush-primary transition-colors w-12";
+
+                if (tabName === 'tips') this.updateTips();
+                if (tabName === 'insights') this.renderInsights();
+            }
+
+            saveSettings() {
+                const cLen = parseInt(document.getElementById('setting-cycle-length')?.value) || 28;
+                const pLen = parseInt(document.getElementById('setting-period-length')?.value) || 5;
+
+                this.settings.avgCycleLength = cLen;
+                this.settings.avgPeriodDuration = pLen;
+
+                this.saveToLocalStorage();
+                this.renderCalendar();
+                this.updateStatusCard();
+                this.toast("Settings saved successfully!");
+            }
+
+            resetAllData() {
+                if (confirm("Are you sure you want to reset all tracked period logs and start dates?")) {
+                    localStorage.removeItem('blush_flow_logs');
+                    localStorage.removeItem('blush_flow_starts');
+                    localStorage.removeItem('blush_flow_settings');
+                    location.reload();
+                }
+            }
+
+            // --- HELPER UTILITIES ---
+            formatDateKey(date) {
+                const y = date.getFullYear();
+                const m = (date.getMonth() + 1).toString().padStart(2, '0');
+                const d = date.getDate().toString().padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
+
+            toast(message) {
+                const toastEl = document.getElementById('mascot-toast');
+                const toastText = document.getElementById('mascot-toast-text');
+                if (!toastEl || !toastText) return;
+
+                toastText.innerText = message;
+
+                toastEl.classList.remove('-translate-y-20', 'opacity-0', 'pointer-events-none');
+                toastEl.classList.add('translate-y-0', 'opacity-100');
+
+                setTimeout(() => {
+                    toastEl.classList.add('-translate-y-20', 'opacity-0', 'pointer-events-none');
+                    toastEl.classList.remove('translate-y-0', 'opacity-100');
+                }, 3000);
+            }
+
+            showMascotGreeting() {
+                const cuteQuotes = [
+                    "Remember to hydrate and take deep breaths today! 💕",
+                    "You're doing amazing! Treat yourself to something nice! 🌸",
+                    "Blush Flow is here with you every step of your cycle! 🍓",
+                    "Listen to your body today! ✨"
+                ];
+                const quote = cuteQuotes[Math.floor(Math.random() * cuteQuotes.length)];
+                this.toast(quote);
+            }
+        }
+
+        // Initialize App on DOM Ready
+        let app;
+        window.addEventListener('DOMContentLoaded', () => {
+            app = new BlushFlowApp();
+        });
+    </script>
+</body>
+</html>
