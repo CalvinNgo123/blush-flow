@@ -4,14 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Blush Flow - Cute Period & Cycle Tracker</title>
+    <!-- Custom Apple Touch Icon for iPhone Home Screen -->
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+    <link rel="apple-touch-icon-precomposed" href="./apple-touch-icon.png">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome for cute icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts: Quicksand & Nunito for playful aesthetics -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
-    <!-- Custom Apple Touch Icon for iPhone Home Screen -->
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
     
     <script>
         tailwind.config = {
@@ -91,25 +93,9 @@
 
     <!-- iPhone Device Frame Container -->
     <div class="relative w-full max-w-[412px] h-[100vh] sm:h-[844px] bg-blush-bg sm:rounded-[50px] shadow-2xl overflow-hidden flex flex-col border-0 sm:border-[10px] border-slate-900">
-        
-        <!-- Dynamic Island / Top Notch -->
-        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[120px] h-[28px] bg-black rounded-b-2xl z-50 flex items-center justify-center hidden sm:flex">
-            <div class="w-3 h-3 rounded-full bg-slate-900 mr-2 border border-slate-800"></div>
-            <div class="w-2 h-2 rounded-full bg-blue-900/40"></div>
-        </div>
-
-        <!-- iOS Status Bar -->
-        <div class="w-full pt-3 px-6 pb-2 flex justify-between items-center text-xs font-bold text-slate-800 z-40 select-none">
-            <span id="ios-time">9:41</span>
-            <div class="flex items-center space-x-1.5">
-                <i class="fa-solid fa-signal text-[10px]"></i>
-                <i class="fa-solid fa-wifi text-[10px]"></i>
-                <i class="fa-solid fa-battery-full text-xs text-emerald-600"></i>
-            </div>
-        </div>
 
         <!-- APP HEADER WITH MASCOT -->
-        <header class="px-5 py-2 flex items-center justify-between z-30">
+        <header class="px-5 pt-6 pb-2 flex items-center justify-between z-30">
             <div class="flex items-center space-x-2">
                 <!-- Cute Blood Drop Mascot Logo -->
                 <div class="w-10 h-10 relative flex items-center justify-center filter drop-shadow-md cursor-pointer animate-gentle" onclick="app.showMascotGreeting()">
@@ -411,7 +397,7 @@
         </div>
 
         <!-- MODAL: DAILY LOG ENTRY (Bottom Drawer) -->
-        <div id="modal-log" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-end justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+        <div id="modal-log" class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-end justify-center opacity-0 pointer-events-none transition-opacity duration-300">
             <div class="bg-blush-card w-full max-w-[412px] rounded-t-3xl p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto no-scrollbar">
                 <div class="flex justify-between items-center border-b border-pink-100 pb-2">
                     <div>
@@ -479,8 +465,8 @@
         </div>
 
         <!-- MODAL: 3-MONTH ONBOARDING INITIALIZATION -->
-        <div id="modal-onboarding" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-            <div class="bg-blush-card w-full max-w-[360px] rounded-3xl p-5 shadow-2xl space-y-4 border border-pink-100">
+        <div id="modal-onboarding" class="absolute inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+            <div class="bg-blush-card w-full max-w-[340px] rounded-3xl p-5 shadow-2xl space-y-4 border border-pink-100 my-auto">
                 <div class="text-center space-y-1">
                     <div class="w-16 h-16 mx-auto animate-gentle">
                         <svg viewBox="0 0 100 120" class="w-full h-full">
@@ -568,9 +554,6 @@
             }
 
             init() {
-                this.updateClock();
-                setInterval(() => this.updateClock(), 30000);
-
                 this.loadFromLocalStorage();
 
                 // If no period start dates exist, trigger Onboarding setup
@@ -581,14 +564,6 @@
                     this.updateStatusCard();
                     this.updateTips();
                 }
-            }
-
-            updateClock() {
-                const now = new Date();
-                const hours = now.getHours().toString().padStart(2, '0');
-                const minutes = now.getMinutes().toString().padStart(2, '0');
-                const timeEl = document.getElementById('ios-time');
-                if (timeEl) timeEl.innerText = `${hours}:${minutes}`;
             }
 
             // --- LOCAL STORAGE MANAGEMENT ---
